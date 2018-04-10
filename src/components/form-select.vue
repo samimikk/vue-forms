@@ -1,39 +1,35 @@
 <template>
-  <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--input control-group' : defaultClass, 'error' : hasErrors }">
-    <div v-if="type !== 'radio'">
-      <label class="control-group" :for="id" v-if="label"><span v-text="label"></span><span v-show="required" class="form--required">*</span></label>
+  <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--select control-group' : defaultClass, 'error' : hasErrors }">
+    <label class="control-group" :for="id" v-if="label"><span v-text="label"></span><span v-show="required" class="form--required">*</span></label>
       <div :class="{ 'controls': true }">
-          <input
-            :type="type"
-            :id="id"
-            :name="name"
-            :placeholder="placeholder"
-            v-validate="expression"
-            :data-vv-name="altTitle"
-            :class="{'input': true, 'is-danger': errors.has(title) }"
-            :value="value"
-            v-on="inputListeners"
-            />
-        </div>
-      </div>
-      <div v-else>
-        <h3 v-text="label"></h3>
-        <label :for="'option_'+option.index" v-for="option in options" :key="option.index">
-          <input :type="type" :id="'option_'+option.index" :value="option.value" v-model="value" /> {{option.text}}
-        </label>
+        <select
+          v-model="selected"
+          :id="id"
+          :name="name"
+          v-validate="expression"
+          :data-vv-name="altTitle"
+          :class="{'input': true, 'is-danger': errors.has(title) }"
+          :value="value"
+          v-on="inputListeners"
+        >
+        <option v-for="option in options" :value="option.value" :key="option.index" >
+          {{ option.text }}
+        </option>
+      </select>
       </div>
       <div class="help-block">
         <span v-show="errors.has(title)" class="help is-danger" >{{ errors.first(title) }}</span>
       </div>
-  </div>
+    </div>
 </template>
+
 <script>
 import bus from '@/bus'
 import EventBus from '@/EventBus'
 
 export default {
   inject: ['$validator'],
-  name: 'formInput',
+  name: 'formSelect',
   props: {
     id: {
       type: String,
@@ -55,6 +51,14 @@ export default {
       required: true,
       default: null
     },
+    active: {
+      type: String,
+      required: false
+    },
+    items: {
+      type: String,
+      required: true
+    },
     altTitle: {
       type: String,
       required: false,
@@ -66,10 +70,6 @@ export default {
       default: null
     },
     label: {
-      type: String,
-      required: false
-    },
-    items: {
       type: String,
       required: false
     },
@@ -143,16 +143,16 @@ export default {
   created () {
     bus.$on('validate', this.onValidate)
 
-    // Populate items list
-    if (this.$props.active !== undefined) {
+    // Populate dropdown
+    if (this.$props.active !== '') {
       this.selected = this.$props.active
     }
 
-    if (this.$props.items !== undefined) {
-      this.repeatableKey = 'radio_' + this.id
+    if (this.$props.items !== null) {
       let options = this.$props.items.split(',')
       let index = 0
       let value, text
+
       for (let option of options) {
         if (option.indexOf('|') !== -1) {
           const values = option.split('|')
@@ -166,7 +166,6 @@ export default {
         index++
       }
     }
-
     // Create dependency rules
     if (this.dependency != null) {
       let rule = this.dependency.split('|')
@@ -179,6 +178,7 @@ export default {
       }
       this.emitControllerRules(this.controlled.controller, this.controlled.term, this.id)
     }
+
     // Add element rules for controller
     EventBus.$on('control', (id, rule, target) => {
       if (this.id === id) {
@@ -186,6 +186,7 @@ export default {
         this.controller.term = rule
       }
     })
+
     // Get control rules for controlled element
     EventBus.$on('controllable', (ids, term) => {
       for (let id of ids) {
@@ -209,13 +210,13 @@ export default {
   watch: {
     value: function (val, oldV) {
       if (val !== oldV) {
+
       }
     }
   },
   computed: {
     inputListeners: function () {
       var vm = this
-      console.log(this.type)
       // `Object.assign` merges objects together to form a new object
       return Object.assign({},
         // We add all the listeners from the parent
@@ -226,16 +227,8 @@ export default {
           // This ensures that the component works with v-model
           input: function (event) {},
           change: function (event) {
-            if (this.type === 'radio') {
-              console.log('listen to radio inputs... ' + event.value)
-              vm.$emit('update', {'value': event.target.value, 'key': vm.id})
-              vm.value = event.target.value
-            }
-          },
-          blur: function (event) {
             vm.$emit('update', {'value': event.target.value, 'key': vm.id})
             vm.value = event.target.value
-            console.log(vm.id + ', ' + vm.controller.target.length)
             if (vm.controller.target.length > 0) {
               vm.emitControllerAction(vm.controller.target, event.target.value)
             }

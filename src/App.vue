@@ -1,7 +1,6 @@
 <template>
   <div id="app">
     <form id="yja-forms" @submit.prevent autocomplete="off">
-
       <form-input
         @update="sync"
         id="firstname"
@@ -22,7 +21,6 @@
         placeholder="Your last name"
         validator="alpha"
         altTitle="Last name"
-        dependency="firstname|Sami|show"
         required
       >
       </form-input>
@@ -33,9 +31,30 @@
         label="Title"
         name="title"
         placeholder="Your title"
-        dependency="lastname|any|show"
       >
       </form-input>
+      <form-input
+        @update="sync"
+        id="radio"
+        type="radio"
+        label="Choose one"
+        name="radio"
+        items="Yksi,two|Kaksi,Kolme,Neljä"
+        required
+      >
+      </form-input>
+      <form-select
+        @update="sync"
+        id="Address"
+        type="text"
+        label="Your address"
+        name="address"
+        placeholder="Your address"
+        altTitle="Your address"
+        items="Yksi,two|Kaksi,Kolme,Neljä"
+        active="Yksi"
+      >
+      </form-select>
       <button @click="validateBeforeSubmit">Send</button>
     </form>
   </div>
@@ -43,6 +62,7 @@
 
 <script>
 import formInput from './components/form-input'
+import formSelect from './components/form-select'
 import Vue from 'vue'
 import bus from '@/bus'
 
@@ -52,14 +72,12 @@ export default {
   },
   name: 'App',
   components: {
-    formInput
+    formInput,
+    formSelect
   },
   data: function () {
     return {
-      formData: {
-        key: '',
-        value: ''
-      },
+      formData: {},
       hasErrors: false,
       bus: new Vue()
     }
@@ -71,7 +89,8 @@ export default {
       this.$validator.validateAll().then((result) => {
         if (result) {
           // eslint-disable-next-line
-          console.log('Sending form: ' + this.formData)
+          let form = JSON.stringify(this.formData, null, 2)
+          console.log('Sending form: ' + form)
           return
         }
         console.log('Form still contains errors')
@@ -83,24 +102,18 @@ export default {
       }
     }
   },
-  mounted () {
-  },
-  created () {
-    bus.$on('errors-changed', (errors) => {
-      this.errors.clear()
-      errors.forEach((e) => {
-        this.errors.add(e.field, e.msg, e.rule, e.scope)
-      })
-    })
-  }
+  mounted () {},
+  created () {}
 }
 </script>
 
 <style>
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  border: 1px dashed #ddd;
+  padding: 2em;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
