@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <form id="yja-forms" @submit.prevent>
+    <form id="yja-forms" @submit.prevent autocomplete="off">
 
       <form-input
         @update="sync"
@@ -21,7 +21,8 @@
         name="first_name"
         placeholder="Your last name"
         validator="alpha"
-        altTitle="First name"
+        altTitle="Last name"
+        dependency="firstname|Sami|show"
         required
       >
       </form-input>

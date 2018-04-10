@@ -1,9 +1,5 @@
 <template>
-  <div :ref="containerId" :id="containerId" :class="{ 'form__element--input control-group' : defaultClass, 'error' : hasErrors }">
-<!--
-    <input v-validate="'required|email'" :class="{'input': true, 'is-danger': errors.has('email') }" name="email" type="text" placeholder="Email">
-    <span v-show="errors.has('email')" class="help is-danger">{{ errors.first('email') }}</span>
--->
+  <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--input control-group' : defaultClass, 'error' : hasErrors }">
     <label class="control-group" :for="id"><span v:if="label" v-text="label"></span></label>
       <div :class="{ 'controls': true }">
         <input
@@ -60,11 +56,6 @@ export default {
       required: false,
       default: null
     },
-    visibility: {
-      type: Boolean,
-      default: true,
-      required: false
-    },
     label: {
       type: String,
       required: false
@@ -76,7 +67,8 @@ export default {
     },
     validate: {
       type: String,
-      required: false
+      required: false,
+      default: ''
     },
     validator: {
       type: String,
@@ -96,6 +88,11 @@ export default {
       type: Boolean,
       required: false,
       default: false
+    },
+    hidden: {
+      type: Boolean,
+      required: false,
+      default: false
     }
   },
   data: function () {
@@ -107,8 +104,16 @@ export default {
       defaultClass: true,
       title: String,
       expression: Object,
-      controllerId: String,
-      controllerTerm: String
+      controlled: {
+        controller: '',
+        term: '',
+        behaviour: 'hide'
+      },
+      controller: {
+        target: '',
+        term: ''
+      },
+      visibility: this.$props.hidden
     }
   },
   mounted () {
@@ -127,12 +132,49 @@ export default {
   },
   created () {
     bus.$on('validate', this.onValidate)
-    this.$watch(() => this.errors.errors, (value) => {
-      bus.$emit('errors-changed', value)
+    // Create dependency rules
+    if (this.dependency != null) {
+      let rule = this.dependency.split('|')
+      this.controlled.controller = rule[0]
+      this.controlled.term = rule[1]
+      this.controlled.behaviour = rule[2]
+
+      if (this.controlled.behaviour === 'show') {
+        this.visibility = true
+      }
+      this.emitControllerRules(this.controlled.controller, this.controlled.term, this.id)
+    }
+    // Add element rules for controller
+    EventBus.$on('control', (id, rule, target) => {
+      if (this.id === id) {
+        this.controller.target = target
+        this.controller.term = rule
+      }
+    })
+    // Get control rules for controlled element
+    EventBus.$on('controllable', (id, term) => {
+      if (this.id === id) {
+        if ((this.controlled.term === 'any' && term !== '') || term === this.controlled.term) {
+          if (this.controlled.behaviour === 'show') {
+            this.visibility = false
+          } else {
+            this.visibility = true
+          }
+        } else {
+          this.visibility = !this.visibility
+        }
+      }
     })
   },
   beforeDestroy () {
     bus.$off('validate', this.onValidate)
+  },
+  watch: {
+    value: function (val, oldV) {
+      if (val !== oldV) {
+
+      }
+    }
   },
   computed: {
     inputListeners: function () {
@@ -146,17 +188,14 @@ export default {
         {
           // This ensures that the component works with v-model
           input: function (event) {
-            vm.$emit('update', {'value': event.target.value, 'key': vm.id})
-            if (vm.dependency != null) {
-              let rule = vm.dependency.split('|')
-              vm.controllerId = rule[0]
-              vm.controllerTerm = rule[1]
-              vm.emitMethod(vm.id, event.target.value, vm.controllerId, vm.controllerTerm)
-            }
 
-            EventBus.$on('controller', toggle => {
-              console.log('Toggle is: ' + toggle)
-            })
+          },
+          blur: function (event) {
+            vm.$emit('update', {'value': event.target.value, 'key': vm.id})
+            vm.value = event.target.value
+            if (vm.controller.target !== '') {
+              vm.emitControllerAction(vm.controller.target, event.target.value)
+            }
           }
         }
       )
@@ -166,17 +205,11 @@ export default {
     onValidate () {
       this.$validator.validateAll()
     },
-    emitMethod (component, id, term, value) {
-      console.log(component, id, term, value)
-      let toggle = Boolean(false)
-      if (component === id) {
-        if ((term === 'any' && value !== '') || term === value) {
-          toggle = Boolean(true)
-        }
-
-        return toggle
-      }
-      EventBus.$emit('controller', toggle)
+    emitControllerRules (id, rule, target) {
+      EventBus.$emit('control', id, rule, target)
+    },
+    emitControllerAction (id, term) {
+      EventBus.$emit('controllable', id, term)
     }
   }
 }
