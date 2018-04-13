@@ -3,7 +3,7 @@
 > Vue.js form components
 
 ## External libraries
-> Vee Validete\  
+> Vee Validete    
 https://vee-validate.logaretm.com/
 
 
