@@ -6,10 +6,9 @@
         id="firstname"
         type="text"
         label="First name"
-        placeholder="First name"
-        name="first_name"
-        validator="alpha"
-        required
+        name="firstname"
+        validator="required|alpha"
+        altTitle="first name"
       >
       </form-input>
       <form-input
@@ -17,11 +16,9 @@
         id="lastname"
         type="text"
         label="Last name"
-        name="first_name"
-        placeholder="Your last name"
-        validator="alpha"
-        altTitle="Last name"
-        required
+        name="lastname"
+        altTitle="last name"
+        validator="required"
       >
       </form-input>
       <form-input
@@ -30,7 +27,6 @@
         type="text"
         label="Title"
         name="title"
-        placeholder="Your title"
       >
       </form-input>
       <form-input
@@ -41,8 +37,23 @@
         name="radio"
         items="Yksi,two|Kaksi,Kolme,Neljä"
         required
-      >
-      </form-input>
+      ></form-input>
+      <form-input
+        @update="sync"
+        id="checkbox"
+        type="checkbox"
+        label="Choose one or many"
+        name="checkbox"
+        items="Yksi,two|Kaksi,Kolme,Neljä"
+      ></form-input>
+      <form-input
+        @update="sync"
+        id="useselect"
+        type="checkbox"
+        label="Want to to select?"
+        name="checkbox"
+      ></form-input>
+
       <form-select
         @update="sync"
         id="Address"
@@ -52,9 +63,11 @@
         placeholder="Your address"
         altTitle="Your address"
         items="Yksi,two|Kaksi,Kolme,Neljä"
+        dependency="useselect|true|show"
         active="Yksi"
       >
       </form-select>
+      <flat-pickr v-model="date"></flat-pickr>
       <button @click="validateBeforeSubmit">Send</button>
     </form>
   </div>
@@ -63,6 +76,8 @@
 <script>
 import formInput from './components/form-input'
 import formSelect from './components/form-select'
+import flatPickr from 'vue-flatpickr-component';
+import 'flatpickr/dist/flatpickr.css';
 import Vue from 'vue'
 import bus from '@/bus'
 
@@ -73,13 +88,15 @@ export default {
   name: 'App',
   components: {
     formInput,
-    formSelect
+    formSelect,
+    flatPickr
   },
   data: function () {
     return {
       formData: {},
       hasErrors: false,
-      bus: new Vue()
+      bus: new Vue(),
+      date: null
     }
   },
   methods: {

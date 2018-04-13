@@ -6,7 +6,7 @@
           v-model="selected"
           :id="id"
           :name="name"
-          v-validate="expression"
+          v-validate="validator"
           :data-vv-name="altTitle"
           :class="{'input': true, 'is-danger': errors.has(title) }"
           :value="value"
@@ -111,9 +111,9 @@ export default {
       options: [],
       hasErrors: false,
       message: String,
+      validatorRules: String,
       defaultClass: true,
       title: String,
-      expression: Object,
       controlled: {
         controller: '',
         term: '',
@@ -127,28 +127,26 @@ export default {
     }
   },
   mounted () {
-    if (this.validator != null) {
+    if (this.required || this.validator !== '') {
       if (this.required) {
-        this.expression = 'required|' + this.validator
-      } else {
-        this.expression = this.validator
+        this.validatorRules = 'required'
       }
-      if (this.altTitle !== null) {
-        this.title = this.altTitle
-      } else {
-        this.title = this.name
+      if (this.required && this.validator !== '') {
+        this.validatorRules = 'required|' + this.validator
+      }
+      if (!this.required && this.validator !== '') {
+        this.validatorRules = this.validator
       }
     }
   },
   created () {
     bus.$on('validate', this.onValidate)
-
     // Populate dropdown
     if (this.$props.active !== '') {
       this.selected = this.$props.active
     }
 
-    if (this.$props.items !== null) {
+    if (this.items !== null) {
       let options = this.$props.items.split(',')
       let index = 0
       let value, text
@@ -176,6 +174,8 @@ export default {
       if (this.controlled.behaviour === 'show') {
         this.visibility = true
       }
+      console.log(this.controlled.controller, this.controlled.term, this.id)
+
       this.emitControllerRules(this.controlled.controller, this.controlled.term, this.id)
     }
 
