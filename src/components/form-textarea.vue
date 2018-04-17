@@ -1,35 +1,31 @@
 <template>
   <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--select control-group' : defaultClass, 'error' : hasErrors }">
     <label class="control-group" :for="id" v-if="label"><span v-text="label"></span><span v-show="required" class="form--required">*</span></label>
-      <div :class="{ 'controls': true }">
-        <select
-          v-model="selected"
-          :id="id"
-          :name="name"
-          v-validate="validator"
-          :data-vv-name="plainTitle"
-          :class="{'input': true, 'is-danger': errors.has(plainTitle) }"
-          :value="value"
-          v-on="inputListeners"
-        >
-        <option v-for="option in options" :value="option.value" :key="option.index" >
-          {{ option.text }}
-        </option>
-      </select>
-      </div>
-      <div class="help-block">
-        <span v-show="errors.has(plainTitle)" class="help is-danger" >{{ errors.first(plainTitle) }}</span>
-      </div>
+    <div :class="{ 'controls': true }">
+      <textarea
+      :id="id"
+      :name="name"
+      :autocomplete="id"
+      :data-vv-name="plainTitle"
+      :placeholder="placeholder"
+      v-validate="validator"
+      :class="{'input': true, 'is-danger': errors.first(plainTitle)}"
+      v-on="inputListeners"
+      v-model="message" >
+    </textarea>
     </div>
+    <div class="help-block">
+      <span v-show="errors.has(plainTitle)" class="help is-danger" >{{ errors.first(plainTitle) }}</span>
+    </div>
+  </div>
 </template>
-
 <script>
 import bus from '@/bus'
 import EventBus from '@/EventBus'
 
 export default {
   inject: ['$validator'],
-  name: 'formSelect',
+  name: 'formTextarea',
   props: {
     id: {
       type: String,
@@ -41,23 +37,10 @@ export default {
         return 'form__element--' + this.$props.id
       }
     },
-    type: {
-      type: String,
-      required: true,
-      default: 'text'
-    },
     name: {
       type: String,
       required: true,
       default: null
-    },
-    active: {
-      type: String,
-      required: false
-    },
-    items: {
-      type: String,
-      required: true
     },
     plainTitle: {
       type: String,
@@ -81,7 +64,7 @@ export default {
     validator: {
       type: String,
       required: false,
-      default: ''
+      default: null
     },
     dependency: {
       type: String,
@@ -92,28 +75,29 @@ export default {
       default: false,
       required: false
     },
-    required: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
     hidden: {
       type: Boolean,
       required: false,
       default: false
+    },
+    errorText: {
+      type: String,
+      required: false
+    },
+    expression: {
+      type: String,
+      required: false
     }
   },
   data: function () {
     return {
       key: '',
-      value: '',
-      selected: '',
-      options: [],
+      message: '',
       hasErrors: false,
-      message: String,
-      validatorRules: String,
       defaultClass: true,
       title: '',
+      validatorRules: String,
+      required: false,
       controlled: {
         controller: '',
         term: '',
@@ -127,45 +111,12 @@ export default {
     }
   },
   mounted () {
-    if (this.required || this.validator !== '') {
-      if (this.required) {
-        this.validatorRules = 'required'
-      }
-      if (this.required && this.validator !== '') {
-        this.validatorRules = 'required|' + this.validator
-      }
-      if (!this.required && this.validator !== '') {
-        this.validatorRules = this.validator
-      }
-    }
   },
   created () {
     bus.$on('validate', this.onValidate)
-    // Populate dropdown
-    if (this.$props.active !== '') {
-      this.selected = this.$props.active
-    }
 
-    if (this.items !== null) {
-      let options = this.$props.items.split(',')
-      let index = 0
-      let value, text
-
-      for (let option of options) {
-        if (option.indexOf('|') !== -1) {
-          const values = option.split('|')
-          value = values[0]
-          text = values[1]
-        } else {
-          value = option
-          text = option
-        }
-        this.options.push({'text': text, 'value': value, 'index': index})
-        index++
-      }
-    }
     // Create dependency rules
-    if (this.dependency != null) {
+    if (this.dependency !== undefined) {
       let rule = this.dependency.split('|')
       this.controlled.controller = rule[0]
       this.controlled.term = rule[1]
@@ -201,15 +152,17 @@ export default {
         }
       }
     })
+
+    if (this.validator !== null && this.validator.indexOf('required') !== -1) {
+      this.required = true
+    }
   },
   beforeDestroy () {
     bus.$off('validate', this.onValidate)
   },
   watch: {
     value: function (val, oldV) {
-      if (val !== oldV) {
 
-      }
     }
   },
   computed: {
@@ -224,11 +177,12 @@ export default {
         {
           // This ensures that the component works with v-model
           input: function (event) {},
-          change: function (event) {
-            vm.$emit('update', {'value': event.target.value, 'key': vm.id, 'label': vm.label})
-            vm.value = event.target.value
+          change: function (event) {},
+          blur: function (event) {
+            vm.$emit('update', {'value': vm.message, 'key': vm.id, 'label': vm.label})
+
             if (vm.controller.target.length > 0) {
-              vm.emitControllerAction(vm.controller.target, event.target.value)
+              vm.emitControllerAction(vm.controller.target, vm.message)
             }
           }
         }

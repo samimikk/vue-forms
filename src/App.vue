@@ -8,7 +8,7 @@
         label="First name"
         name="firstname"
         validator="required|alpha"
-        altTitle="first name"
+        plainTitle="first name"
       >
       </form-input>
       <form-input
@@ -17,7 +17,7 @@
         type="text"
         label="Last name"
         name="lastname"
-        altTitle="last name"
+        plainTitle="last name"
         validator="required"
       >
       </form-input>
@@ -59,7 +59,7 @@
         type="text"
         label="Your address"
         name="address"
-        altTitle="Your address"
+        plainTitle="Your address"
         items="Yksi,two|Kaksi,Kolme,Neljä"
         dependency="useselect|true|show"
         active="Yksi"
@@ -70,10 +70,19 @@
         id="date"
         label="Choose date"
         name="date"
-        altTitle="päivämäärä"
+        plainTitle="päivämäärä"
         placeholder="Valitse päivämäärä"
         validator="required"
         ></form-date>
+
+        <form-textarea
+          @update="sync"
+          id="feedback"
+          label="Anna palautetta"
+          name="feeback"
+          plainTitle="palautetta"
+        ></form-textarea>
+
       <button @click="validateBeforeSubmit">Send</button>
     </form>
   </div>
@@ -83,6 +92,7 @@
 import formInput from './components/form-input'
 import formSelect from './components/form-select'
 import formDate from './components/form-date'
+import formTextarea from './components/form-textarea'
 import Vue from 'vue'
 import bus from '@/bus'
 
@@ -94,11 +104,12 @@ export default {
   components: {
     formInput,
     formSelect,
-    formDate
+    formDate,
+    formTextarea
   },
   data: function () {
     return {
-      formData: {},
+      formData: [],
       hasErrors: false,
       bus: new Vue(),
       date: null
@@ -120,7 +131,7 @@ export default {
     },
     sync: function (args) {
       if (args.value !== undefined) {
-        this.formData[args.key] = args.value
+        this.formData.push({id: args.key, value: args.value, label: args.label})
       }
     }
   },

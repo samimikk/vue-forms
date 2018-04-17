@@ -8,23 +8,23 @@
         class="form-control"
         :placeholder="placeholder"
         name="date"
-        :data-vv-name="altTitle"
-        :class="{'input': true, 'is-danger': errors.first(altTitle)}"
+        :data-vv-name="plainTitle"
+        :class="{'input': true, 'is-danger': errors.first(plainTitle)}"
         v-validate="validator"
         data-vv-value-path="innerValue"
-        :has-error="errors.has(altTitle)">
+        :has-error="errors.has(plainTitle)">
       ></flat-pickr>
       <span class="add-on"><i class="icon-calendar" aria-hidden="true"></i></span>
     </div>
     <div class="help-block">
-      <span v-show="errors.first(altTitle)" class="help is-danger" >{{ errors.first(altTitle) }}</span>
+      <span v-show="errors.first(plainTitle)" class="help is-danger" >{{ errors.first(plainTitle) }}</span>
     </div>
   </div>
 </template>
 
 <script>
-import flatPickr from 'vue-flatpickr-component';
-import 'flatpickr/dist/flatpickr.css';
+import flatPickr from 'vue-flatpickr-component'
+import 'flatpickr/dist/flatpickr.css'
 import bus from '@/bus'
 import EventBus from '@/EventBus'
 
@@ -48,7 +48,7 @@ export default {
       required: true,
       default: null
     },
-    altTitle: {
+    plainTitle: {
       type: String,
       required: false,
       default: null
@@ -138,9 +138,7 @@ export default {
 
   },
   created () {
-
     bus.$on('validate', this.onValidate)
-
 
     // Create dependency rules
     if (this.dependency !== undefined) {
@@ -189,37 +187,16 @@ export default {
   },
   watch: {
     value: function (val, oldV) {
-      console.log(val)
+    },
+    date: function (val, oldV) {
+      this.$emit('update', {'key': this.id, 'value': val, 'label': this.label})
+      this.value = val
+      if (this.controller.target.length > 0) {
+        this.emitControllerAction(this.controller.target, val)
+      }
     }
   },
-  computed: {
-    inputListeners: function () {
-      var vm = this
-      // `Object.assign` merges objects together to form a new object
-      return Object.assign({},
-        // We add all the listeners from the parent
-        this.$listeners,
-        // Then we can add custom listeners or override the
-        // behavior of some listeners.
-        {
-          // This ensures that the component works with v-model
-          input: function (event) {
-
-          },
-          change: function (event) {
-
-          },
-          blur: function (event) {
-            vm.$emit('update', {'value': event.target.value, 'key': vm.id})
-            vm.value = event.target.value
-            if (vm.controller.target.length > 0) {
-              vm.emitControllerAction(vm.controller.target, event.target.value)
-            }
-          }
-        }
-      )
-    }
-  },
+  computed: {},
   methods: {
     onValidate () {
       this.$validator.validateAll()

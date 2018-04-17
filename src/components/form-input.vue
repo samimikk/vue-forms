@@ -22,16 +22,17 @@
           :type="type"
           :id="id"
           :name="name"
+          :autocomplete="id"
           :placeholder="placeholder"
-          :data-vv-name="altTitle"
+          :data-vv-name="plainTitle"
           v-validate="validator"
-          :class="{'input': true, 'is-danger': errors.first(altTitle)}"
+          :class="{'input': true, 'is-danger': errors.first(plainTitle)}"
           :value="value"
           v-on="inputListeners"/>
       </div>
     </div>
     <div class="help-block">
-      <span v-show="errors.first(altTitle)" class="help is-danger" >{{ errors.first(altTitle) }}</span>
+      <span v-show="errors.first(plainTitle)" class="help is-danger" >{{ errors.first(plainTitle) }}</span>
     </div>
   </div>
 </template>
@@ -63,7 +64,7 @@ export default {
       required: true,
       default: null
     },
-    altTitle: {
+    plainTitle: {
       type: String,
       required: false,
       default: null
@@ -133,7 +134,7 @@ export default {
       hasErrors: false,
       message: String,
       defaultClass: true,
-      title: String,
+      title: '',
       validatorRules: String,
       required: false,
       controlled: {
@@ -149,12 +150,11 @@ export default {
     }
   },
   mounted () {
-    if (this.type === 'checkbox' && !this.multiple ) {
+    if (this.type === 'checkbox' && !this.multiple) {
       document.getElementById(this.id).checked = this.isChecked
     }
   },
   created () {
-
     bus.$on('validate', this.onValidate)
 
     // Populate items list
@@ -266,8 +266,10 @@ export default {
 
           },
           blur: function (event) {
-            vm.$emit('update', {'value': event.target.value, 'key': vm.id})
             vm.value = event.target.value
+            if (vm.value != '' || vm.value === undefined) {
+              vm.$emit('update', {'value': event.target.value, 'key': vm.id, 'label': vm.label})
+            }
             if (vm.controller.target.length > 0) {
               vm.emitControllerAction(vm.controller.target, event.target.value)
             }
