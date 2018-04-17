@@ -36,7 +36,6 @@
         label="Choose one"
         name="radio"
         items="Yksi,two|Kaksi,Kolme,Neljä"
-        required
       ></form-input>
       <form-input
         @update="sync"
@@ -60,14 +59,21 @@
         type="text"
         label="Your address"
         name="address"
-        placeholder="Your address"
         altTitle="Your address"
         items="Yksi,two|Kaksi,Kolme,Neljä"
         dependency="useselect|true|show"
         active="Yksi"
       >
       </form-select>
-      <flat-pickr v-model="date"></flat-pickr>
+      <form-date
+        @update="sync"
+        id="date"
+        label="Choose date"
+        name="date"
+        altTitle="päivämäärä"
+        placeholder="Valitse päivämäärä"
+        validator="required"
+        ></form-date>
       <button @click="validateBeforeSubmit">Send</button>
     </form>
   </div>
@@ -76,8 +82,7 @@
 <script>
 import formInput from './components/form-input'
 import formSelect from './components/form-select'
-import flatPickr from 'vue-flatpickr-component';
-import 'flatpickr/dist/flatpickr.css';
+import formDate from './components/form-date'
 import Vue from 'vue'
 import bus from '@/bus'
 
@@ -89,7 +94,7 @@ export default {
   components: {
     formInput,
     formSelect,
-    flatPickr
+    formDate
   },
   data: function () {
     return {

@@ -1,47 +1,37 @@
 <template>
-  <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--input control-group' : defaultClass, 'error' : hasErrors }">
-    <div v-if="type === 'radio'">
-      <legend v-text="label"></legend>
-      <label :for="id+'_option_'+option.index" v-for="option in options" :key="option.index">
-        <input :type="type" :id="id+'_option_'+option.index" :value="option.value" v-model="radioValue" /> {{option.text}}
-      </label>
-    </div>
-    <div v-else-if="type === 'checkbox'">
-      <legend v-if="multiple" v-text="label"></legend>
-      <label v-if="multiple" :for="id+'_option_'+option.index" v-for="option in options" :key="option.index">
-        <input :type="type" :id="id+'_option_'+option.index" :value="option.value" v-model="checkboxValues" /> {{option.text}}
-      </label>
-      <label v-if="!multiple" :for="id">
-        <input :checked="!isChecked" :type="type" :id="id" :value="value" v-model="checkboxValue" /> {{label}}
-      </label>
-    </div>
-    <div v-else>
-      <label class="control-group" :for="id" v-if="label"><span v-text="label"></span><span v-show="required" class="form--required">*</span></label>
-      <div :class="{ 'controls': true }">
-        <input
-          :type="type"
-          :id="id"
-          :name="name"
-          :placeholder="placeholder"
-          :data-vv-name="altTitle"
-          v-validate="validator"
-          :class="{'input': true, 'is-danger': errors.first(altTitle)}"
-          :value="value"
-          v-on="inputListeners"/>
-      </div>
+  <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--date control-group' : defaultClass, 'error' : hasErrors }">
+    <label class="control-group" :for="id" v-if="label"><span v-text="label"></span><span v-show="required" class="form--required">*</span></label>
+    <div class="input-append">
+      <flat-pickr
+        v-model="date"
+        :config="config"
+        class="form-control"
+        :placeholder="placeholder"
+        name="date"
+        :data-vv-name="altTitle"
+        :class="{'input': true, 'is-danger': errors.first(altTitle)}"
+        v-validate="validator"
+        data-vv-value-path="innerValue"
+        :has-error="errors.has(altTitle)">
+      ></flat-pickr>
+      <span class="add-on"><i class="icon-calendar" aria-hidden="true"></i></span>
     </div>
     <div class="help-block">
       <span v-show="errors.first(altTitle)" class="help is-danger" >{{ errors.first(altTitle) }}</span>
     </div>
   </div>
 </template>
+
 <script>
+import flatPickr from 'vue-flatpickr-component';
+import 'flatpickr/dist/flatpickr.css';
 import bus from '@/bus'
 import EventBus from '@/EventBus'
 
 export default {
   inject: ['$validator'],
   name: 'formInput',
+  components: { flatPickr },
   props: {
     id: {
       type: String,
@@ -52,11 +42,6 @@ export default {
       default: function () {
         return 'form__element--' + this.$props.id
       }
-    },
-    type: {
-      type: String,
-      required: true,
-      default: 'text'
     },
     name: {
       type: String,
@@ -124,12 +109,13 @@ export default {
     return {
       key: '',
       value: '',
-      selected: '',
-      options: [],
-      multiple: false,
-      radioValue: '',
-      checkboxValues: [],
-      checkboxValue: Boolean,
+      date: '',
+      config: {
+        wrap: true, // set wrap to true only when using 'input-group'
+        altFormat: 'd.m.Y',
+        altInput: true,
+        dateFormat: 'd.m.Y'
+      },
       hasErrors: false,
       message: String,
       defaultClass: true,
@@ -149,38 +135,13 @@ export default {
     }
   },
   mounted () {
-    if (this.type === 'checkbox' && !this.multiple ) {
-      document.getElementById(this.id).checked = this.isChecked
-    }
+
   },
   created () {
 
     bus.$on('validate', this.onValidate)
 
-    // Populate items list
-    if (this.$props.active !== undefined) {
-      this.selected = this.$props.active
-    }
 
-    if (this.$props.items !== null) {
-      this.multiple = true
-      this.repeatableKey = 'radio_' + this.id
-      let options = this.$props.items.split(',')
-      let index = 0
-      let value, text
-      for (let option of options) {
-        if (option.indexOf('|') !== -1) {
-          const values = option.split('|')
-          value = values[0]
-          text = values[1]
-        } else {
-          value = option
-          text = option
-        }
-        this.options.push({'text': text, 'value': value, 'index': index})
-        index++
-      }
-    }
     // Create dependency rules
     if (this.dependency !== undefined) {
       let rule = this.dependency.split('|')
@@ -228,24 +189,7 @@ export default {
   },
   watch: {
     value: function (val, oldV) {
-    },
-    radioValue: function (val, oldV) {
-      if (this.controller.target.length > 0) {
-        this.emitControllerAction(this.controller.target, val)
-      }
-      this.$emit('update', {'value': val, 'key': this.id})
-    },
-    checkboxValues: function (val, oldV) {
-      if (this.controller.target.length > 0) {
-        this.emitControllerAction(this.controller.target, val)
-      }
-      this.$emit('update', {'value': val, 'key': this.id})
-    },
-    checkboxValue: function (val, oldV) {
-      if (this.controller.target.length > 0) {
-        this.emitControllerAction(this.controller.target, val)
-      }
-      this.$emit('update', {'value': val, 'key': this.id})
+      console.log(val)
     }
   },
   computed: {
