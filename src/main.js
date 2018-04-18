@@ -2,7 +2,8 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-import VeeValidate from 'vee-validate'
+import VeeValidate, { Validator } from 'vee-validate'
+import fi from 'vee-validate/dist/locale/fi';
 
 Vue.config.productionTip = false
 
@@ -11,7 +12,7 @@ const config = {
   errorBagName: 'errors', // change if property conflicts
   fieldsBagName: 'fields',
   delay: 0,
-  locale: 'en',
+  locale: 'fi',
   dictionary: null,
   strict: true,
   classes: false,
@@ -30,7 +31,7 @@ const config = {
   i18n: null, // the vue-i18n plugin instance
   i18nRootKey: 'validations' // the nested key under which the validation messsages will be located
 }
-
+Validator.localize('fi', fi);
 Vue.use(VeeValidate, config)
 
 /* eslint-disable no-new */

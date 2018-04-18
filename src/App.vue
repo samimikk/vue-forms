@@ -75,14 +75,25 @@
         validator="required"
         ></form-date>
 
+        <!-- TEXTAREA -->
         <form-textarea
           @update="sync"
           id="feedback"
           label="Anna palautetta"
           name="feeback"
           plainTitle="palautetta"
+          dependency="useselect|true|show"
         ></form-textarea>
 
+        <!-- FILE UPLOAD -->
+        <form-file
+          @update="sync"
+          id="files"
+          label="Lisää liite"
+          name="attachments"
+          plainTitle="liite"
+          validator="required|image"
+        ></form-file>
       <button @click="validateBeforeSubmit">Send</button>
     </form>
   </div>
@@ -93,19 +104,20 @@ import formInput from './components/form-input'
 import formSelect from './components/form-select'
 import formDate from './components/form-date'
 import formTextarea from './components/form-textarea'
+import formFile from './components/form-file'
 import Vue from 'vue'
 import bus from '@/bus'
 
+
+
 export default {
-  $_veeValidate: {
-    validator: 'new'
-  },
   name: 'App',
   components: {
     formInput,
     formSelect,
     formDate,
-    formTextarea
+    formTextarea,
+    formFile
   },
   data: function () {
     return {
@@ -121,18 +133,101 @@ export default {
       bus.$emit('validate')
       this.$validator.validateAll().then((result) => {
         if (result) {
-          // eslint-disable-next-line
-          let form = JSON.stringify(this.formData, null, 2)
-          console.log('Sending form: ' + form)
+          let form = this.appendToForm(this.formData)
+          console.log('formData contains: ', JSON.stringify(this.formData, null, 2))
+          console.log('form contains: ', ...form)
           return
         }
         console.log('Form still contains errors')
       })
     },
     sync: function (args) {
+      // Check if is new entry
+      let isNew = this.checkForExisting(args.key, this.formData)
+      if (isNew === false) {
+        this.formData = this.removeDataInstance(args.key)
+      }
       if (args.value !== undefined) {
         this.formData.push({id: args.key, value: args.value, label: args.label})
       }
+      if (args.value === undefined && args.files !== null) {
+        this.formData.push({id: args.key, file: args.file, filename: args.filename, label: args.label})
+      }
+    },
+    removeDataInstance (id, value) {
+      const data = this.formData
+      for (var key in data) {
+        if (!data.hasOwnProperty(key)) {
+          continue
+        } else {
+          var obj = data[key]
+          for (var prop in obj) {
+            if (!obj.hasOwnProperty(prop)) {
+              continue
+            } else {
+              if (prop === 'id') {
+                if (obj[prop] === id) {
+                  delete data[key]
+                  return data
+                }
+              }
+            }
+          }
+        }
+      }
+      return data
+    },
+    checkForExisting (id, data) {
+      let result = Boolean(true)
+      for (var key in data) {
+        if (!data.hasOwnProperty(key)) {
+          continue
+        } else {
+          var obj = data[key]
+          for (var prop in obj) {
+            if (!obj.hasOwnProperty(prop)) {
+              continue
+            } else {
+              if (prop === 'id') {
+                if (obj[prop] === id) {
+                  result = Boolean(false)
+                }
+              }
+            }
+          }
+        }
+      }
+      return result
+    },
+    appendToForm (s) {
+      let t = new FormData()
+      for (var key in s) {
+        let pKey = ''
+        let pValue = ''
+        // skip loop if the property is from prototype
+        if (!s.hasOwnProperty(key)) {
+          continue
+        } else {
+          var obj = s[key]
+          for (var prop in obj) {
+            // skip loop if the property is from prototype
+            if (!obj.hasOwnProperty(prop)) {
+              continue
+            } else {
+              if (prop === 'label') {
+                pKey = obj[prop]
+              }
+              if (prop === 'value' || prop === 'file') {
+                pValue = obj[prop]
+              }
+              if (pKey !== '' && pValue !== '') {
+                t.append(pKey, pValue)
+              }
+            }
+          }
+        }
+      }
+      return t
     }
   },
   mounted () {},

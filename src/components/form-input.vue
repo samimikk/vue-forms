@@ -155,6 +155,7 @@ export default {
     }
   },
   created () {
+
     bus.$on('validate', this.onValidate)
 
     // Populate items list
@@ -233,19 +234,19 @@ export default {
       if (this.controller.target.length > 0) {
         this.emitControllerAction(this.controller.target, val)
       }
-      this.$emit('update', {'value': val, 'key': this.id})
+      this.$emit('update', {'value': val, 'key': this.id, 'label': this.label})
     },
     checkboxValues: function (val, oldV) {
       if (this.controller.target.length > 0) {
         this.emitControllerAction(this.controller.target, val)
       }
-      this.$emit('update', {'value': val, 'key': this.id})
+      this.$emit('update', {'value': val, 'key': this.id, 'label': this.label})
     },
     checkboxValue: function (val, oldV) {
       if (this.controller.target.length > 0) {
         this.emitControllerAction(this.controller.target, val)
       }
-      this.$emit('update', {'value': val, 'key': this.id})
+      this.$emit('update', {'value': val, 'key': this.id, 'label': this.label})
     }
   },
   computed: {
@@ -267,7 +268,7 @@ export default {
           },
           blur: function (event) {
             vm.value = event.target.value
-            if (vm.value != '' || vm.value === undefined) {
+            if (vm.value !== '' || vm.value === undefined) {
               vm.$emit('update', {'value': event.target.value, 'key': vm.id, 'label': vm.label})
             }
             if (vm.controller.target.length > 0) {

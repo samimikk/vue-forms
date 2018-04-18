@@ -1,24 +1,24 @@
 <template>
-  <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--select control-group' : defaultClass, 'error' : hasErrors }">
+  <div v-show="visibility === false" :ref="containerId" :id="containerId" :class="{ 'form__element--input control-group' : defaultClass, 'error' : hasErrors }">
     <label class="control-group" :for="id" v-if="label"><span v-text="label"></span><span v-show="required" class="form--required">*</span></label>
     <div :class="{ 'controls': true }">
-      <textarea
-      :id="id"
-      :name="name"
-      :autocomplete="id"
-      :data-vv-name="plainTitle"
-      :placeholder="placeholder"
-      v-validate="validator"
-      :class="{'input': true, 'is-danger': errors.first(plainTitle)}"
-      v-on="inputListeners"
-      v-model="message"
-      :maxlength="maxLength"
-      :cols="cols"
-      :rows="rows">
-    </textarea>
+      <input
+        type="file"
+        :id="id"
+        :name="name"
+        :autocomplete="id"
+        :data-vv-name="plainTitle"
+        v-validate="validator"
+        :class="{'input': true, 'is-danger': errors.first(plainTitle)}"
+        v-on="inputListeners" />
     </div>
     <div class="help-block">
-      <span v-show="errors.has(plainTitle)" class="help is-danger" >{{ errors.first(plainTitle) }}</span>
+      <span v-show="errors.first(plainTitle)" class="help is-danger" >{{ errors.first(plainTitle) }}</span>
+    </div>
+    <div class="file__list">
+        <div class="file__details" v-for="file in files" :key="file.index">
+            {{ file.name }} <button @click="deleteFile(file.index)">X</button>
+        </div>
     </div>
   </div>
 </template>
@@ -28,7 +28,7 @@ import EventBus from '@/EventBus'
 
 export default {
   inject: ['$validator'],
-  name: 'formTextarea',
+  name: 'formInput',
   props: {
     id: {
       type: String,
@@ -55,21 +55,14 @@ export default {
       required: false,
       default: null
     },
-    cols: {
-      type: Number,
-      required: false
-    },
-    maxLength: {
-      type: Number,
-      required: false
-    },
-    rows: {
-      type: Number,
-      required: false
-    },
     label: {
       type: String,
       required: false
+    },
+    items: {
+      type: String,
+      required: false,
+      default: null
     },
     validate: {
       type: String,
@@ -107,8 +100,13 @@ export default {
   data: function () {
     return {
       key: '',
-      message: '',
+      value: '',
+      files: [],
+      selected: '',
+      options: [],
+      multiple: false,
       hasErrors: false,
+      message: String,
       defaultClass: true,
       title: '',
       validatorRules: String,
@@ -122,14 +120,15 @@ export default {
         target: [],
         term: ''
       },
-      visibility: this.$props.hidden
+      visibility: this.$props.hidden,
+      index: 0
     }
   },
   mounted () {
+
   },
   created () {
     bus.$on('validate', this.onValidate)
-
     // Create dependency rules
     if (this.dependency !== undefined) {
       let rule = this.dependency.split('|')
@@ -177,7 +176,6 @@ export default {
   },
   watch: {
     value: function (val, oldV) {
-
     }
   },
   computed: {
@@ -192,14 +190,20 @@ export default {
         {
           // This ensures that the component works with v-model
           input: function (event) {},
-          change: function (event) {},
-          blur: function (event) {
-            vm.$emit('update', {'value': vm.message, 'key': vm.id, 'label': vm.label})
+          change: function (event) {
+            vm.files.push({'file': event.target.files[0], 'name': event.target.files[0].name, 'index': vm.index})
 
-            if (vm.controller.target.length > 0) {
-              vm.emitControllerAction(vm.controller.target, vm.message)
+            if (vm.files.length > 0 || vm.files === undefined) {
+              console.log('add files to form')
+              vm.$emit('update', {'file': event.target.files[0], 'filename': event.target.files[0].name, 'key': vm.id, 'label': vm.label})
             }
-          }
+            if (vm.controller.target.length > 0) {
+              vm.emitControllerAction(vm.controller.target, event.target.files[0])
+            }
+            vm.index++
+          },
+          blur: function (event) {}
+
         }
       )
     }
@@ -213,7 +217,12 @@ export default {
     },
     emitControllerAction (id, term) {
       EventBus.$emit('controllable', id, term)
+    },
+    deleteFile: function (index) {
+      this.files.splice(index, 1)
+      this.index--
     }
   }
 }
+
 </script>
